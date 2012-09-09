@@ -4,28 +4,26 @@ use utf8;
 use Amon2::Lite;
 use Digest::MD5 ();
 
-
 get '/' => sub {
-    my $c = shift;
+    my ($c, $args) = @_;
     my %args = (
-        path => 'ws://'. $c->req->{env}->{HTTP_HOST} . '/chat/web'
+        path => 'ws://'. $c->req->{env}->{HTTP_HOST} . '/chat/web',
     );
     return $c->render('index.tt', \%args);
 };
 
 
-
 my $clients = {};
 any '/chat/:client_type' => sub {
-    my ($c) = @_;
+    my ($c, $args) = @_;
     my $id = Digest::SHA1::sha1_hex(rand() . $$ . {} . time);
 
     $c->websocket(
         sub {
             my $ws = shift;
             $clients->{$id} = {
-                socket => $ws,
-                type   => $c->req->param('client_type'),
+                socket   => $ws,
+                type     => $args->{'client_type'},
             };
 
             $ws->on_receive_message(

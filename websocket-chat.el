@@ -61,7 +61,6 @@
   (wsc-send-to-server (format "%s: %s" wsc-username msg))
   (wsc-main-loop))
 
-
 (defun wsc-send-to-server (msg)
   (websocket-send-text wsc-websocket
 					   (encode-coding-string msg 'raw-text)))
@@ -78,7 +77,6 @@
 (defun websocket-chat-start ()
   (interactive)
   (wsc-init))
-
 
 (provide 'websocket-chat)
 

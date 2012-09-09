@@ -21,6 +21,10 @@ function initWs(path) {
 		log('error: ' + ev.data);
     };
     $("#form").submit(function () {
+		if ( ! $("#username").val() ) {
+			alert('名前を入力して下さい。');
+			return false;
+		}
 		ws.send($("#username").val() + ': ' + $("#message").val());
 		return false;
     });
