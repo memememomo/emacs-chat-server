@@ -4,28 +4,35 @@ use utf8;
 use Amon2::Lite;
 use Digest::MD5 ();
 
+
 get '/' => sub {
     my $c = shift;
-    return $c->render('index.tt');
+    my %args = (
+        path => 'ws://'. $c->req->{env}->{HTTP_HOST} . '/chat/web'
+    );
+    return $c->render('index.tt', \%args);
 };
 
+
+
 my $clients = {};
-
-
-any '/echo2' => sub {
+any '/chat/:client_type' => sub {
     my ($c) = @_;
     my $id = Digest::SHA1::sha1_hex(rand() . $$ . {} . time);
 
     $c->websocket(
         sub {
             my $ws = shift;
-            $clients->{$id} = $ws;
+            $clients->{$id} = {
+                socket => $ws,
+                type   => $c->req->param('client_type'),
+            };
 
             $ws->on_receive_message(
                 sub {
                     my ($c, $message) = @_;
                     for (keys %$clients) {
-                        $clients->{$_}->send_message(
+                        $clients->{$_}->{socket}->send_message(
                             "$message"
                         );
                     }
@@ -54,56 +61,3 @@ __PACKAGE__->enable_middleware('Lint');
 
 __PACKAGE__->to_app(handle_static => 1);
 
-__DATA__
-
-@@ index.tt
-<!doctype html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>WebSocket Chat</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-    <link rel="stylesheet" href="http://twitter.github.com/bootstrap/1.4.0/bootstrap.min.css">
-</head>
-<body>
-    <div class="container">
-       <header><h1>WS</h1></header>
-       <section class="row">
-           <form id="form">
-               <input type="text" name="username" id="username"/>
-               <input type="text" name="message" id="message"/>
-               <input type="submit"/>
-           </form>
-           <pre id="log"></pre>
-       </section>
-    </div>
-    <script type="text/javascript">
-    function log(msg) {
-        $("#log").text($("#log").text() + msg + "\n");
-    }
-
-    $(function () {
-        var ws = new WebSocket('ws://192.168.56.111:5555/echo2');
-        ws.onopen = function () {
-            log('connected');
-        };
-        ws.onclose = function (ev) {
-            log('closed');
-        };
-        ws.onmessage = function (ev) {
-            log(ev.data);
-            $("#message").val('');
-        };
-        ws.onerror = function (ev) {
-            console.log(ev);
-            log('error: ' + ev.data);
-        };
-        $("#form").submit(function () {
-            ws.send($("#username").val() + ': ' + $("#message").val());
-            return false;
-        });
-    });
-    </script>
-</body>
-</html>

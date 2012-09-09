@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WebSocket Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <link rel="stylesheet" href="http://twitter.github.com/bootstrap/1.4.0/bootstrap.min.css">
+  <script type="text/javascript" src="/static/js/chat.js"></script>
+  <script type="text/javascript">
+	$(function() {
+	    initWs('[% path %]');
+	});
+  </script>
+</head>
+<body>
+  <div class="container">
+    <header><h1>チャット</h1></header>
+    <section class="row">
+      <form id="form">
+        名前: <input type="text" name="username" id="username" class="span2" />
+        Msg: <input type="text" name="message" id="message" clsss="span5" />
+        <input type="submit"/>
+      </form>
+	  <table id="log">
+	  </table>
+    </section>
+  </div>
+</body>
+</html>

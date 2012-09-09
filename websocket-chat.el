@@ -32,14 +32,12 @@
 (defvar wsc-chat-buffer)
 (defvar wsc-host)
 (defvar wsc-port)
-(defvar wsc-path)
 (defvar wsc-username)
 
 
 (defun wsc-read-config ()
   (setq wsc-host (read-string "host: "))
   (setq wsc-port (read-number "port: "))
-  (setq wsc-path (read-string "path: "))
   (setq wsc-username (read-string "username: ")))
 
 (defun wsc-init-window ()
@@ -49,11 +47,11 @@
 (defun wsc-init-websocket ()
   (setq wsc-websocket
 		(websocket-open
-		 (format "ws://%s:%s%s" wsc-host wsc-port wsc-path)
+		 (format "ws://%s:%s/chat/emacs" wsc-host wsc-port)
 		 :on-message (lambda (websocket frame)
 					   (with-current-buffer wsc-chat-buffer
 						 (end-of-buffer)
-						 (insert (format "%s\n" (websocket-frame-payload frame)))))
+						 (insert (format "%s\n" (decode-coding-string (websocket-frame-payload frame) 'utf-8)))))
 		 :on-error (lambda (ws type err)
 					 (message (format "%s:%s" type err)))
 		 :on-close (lambda (websocket) (setq wstest-closed t)))))
@@ -79,11 +77,11 @@
 
 (defun websocket-chat-start ()
   (interactive)
-  (wsc-init)
-)
+  (wsc-init))
 
 
 (provide 'websocket-chat)
+
 
 
 ;;;; websocket-chat.el ends here
