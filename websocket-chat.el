@@ -69,6 +69,7 @@
 		 (format "ws://%s:%s/chat/emacs" wsc:host wsc:port)
 		 :on-message (lambda (websocket frame)
 					   (with-current-buffer wsc:chat-buffer
+						 (beginning-of-buffer)
 						 (insert (format "%s\n" (decode-coding-string (websocket-frame-payload frame) 'utf-8)))
 						 (iimage-recenter)))
 		 :on-error (lambda (ws type err)
