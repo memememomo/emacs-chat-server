@@ -28,9 +28,18 @@ any '/chat/:client_type' => sub {
 
             $ws->on_receive_message(
                 sub {
-                    my ($c, $message) = @_;
-                    for (keys %$clients) {
-                        $clients->{$_}->{socket}->send_message(
+                    my ($c, $original_message) = @_;
+
+                    for my $id (keys %$clients) {
+                        my $client = $clients->{$id};
+
+                        my $message = $original_message;
+
+                        if ( $client->{type} eq 'web' ) {
+                            $message =~ s#\[\[(.+?)\]\]#<img src="/static/stamp/$1"/>#g;
+                        }
+
+                        $client->{socket}->send_message(
                             "$message"
                         );
                     }

@@ -27,56 +27,74 @@
 
 (require 'websocket)
 
+(defgroup websocket-chat nil
+  "Websocket Chat"
+  :group 'text
+  :prefix "wsc:")
 
-(defvar wsc-websocket)
-(defvar wsc-chat-buffer)
-(defvar wsc-host)
-(defvar wsc-port)
-(defvar wsc-username)
+(defcustom wsc:host nil
+  "Server Host"
+  :type 'text
+  :group 'websocket-chat)
 
+(defcustom wsc:port nil
+  "Server Port"
+  :type 'integer
+  :group 'websocket-chat)
 
-(defun wsc-read-config ()
-  (setq wsc-host (read-string "host: "))
-  (setq wsc-port (read-number "port: "))
-  (setq wsc-username (read-string "username: ")))
+(defcustom wsc:username nil
+  "User Name"
+  :type 'text
+  :group 'websocket-chat)
 
-(defun wsc-init-window ()
-  (setq wsc-chat-buffer (get-buffer-create "*wsc-chat*"))
-  (switch-to-buffer wsc-chat-buffer))
+(defvar wsc:websocket)
+(defvar wsc:chat-buffer)
 
-(defun wsc-init-websocket ()
-  (setq wsc-websocket
+(defun wsc:read-config ()
+  (cond ((eq wsc:host 'nil)
+		 (setq wsc:host (read-string "host: "))))
+  (cond ((eq wsc:port 'nil)
+		 (setq wsc:port (read-number "port: "))))
+  (cond ((eq wsc:username 'nil)
+		 (setq wsc:username (read-string "username: ")))))
+
+(defun wsc:init-window ()
+  (setq wsc:chat-buffer (get-buffer-create "*websocket-chat*"))
+  (switch-to-buffer wsc:chat-buffer))
+
+(defun wsc:init-websocket ()
+  (setq wsc:websocket
 		(websocket-open
-		 (format "ws://%s:%s/chat/emacs" wsc-host wsc-port)
+		 (format "ws://%s:%s/chat/emacs" wsc:host wsc:port)
 		 :on-message (lambda (websocket frame)
-					   (with-current-buffer wsc-chat-buffer
-						 (end-of-buffer)
+					   (with-current-buffer wsc:chat-buffer
+						 (recenter)
 						 (insert (format "%s\n" (decode-coding-string (websocket-frame-payload frame) 'utf-8)))))
 		 :on-error (lambda (ws type err)
 					 (message (format "%s:%s" type err)))
 		 :on-close (lambda (websocket) (setq wstest-closed t)))))
 
-(defun wsc-main-loop ()
+(defun wsc:main-loop ()
   (setq msg (read-string "Msg:"))
-  (wsc-send-to-server (format "%s: %s" wsc-username msg))
-  (wsc-main-loop))
+  (wsc:send-to-server (format "%s: %s" wsc:username msg))
+  (wsc:main-loop))
 
-(defun wsc-send-to-server (msg)
-  (websocket-send-text wsc-websocket
+(defun wsc:send-to-server (msg)
+  (websocket-send-text wsc:websocket
 					   (encode-coding-string msg 'raw-text)))
 
-(defun wsc-init ()
-  (wsc-read-config)
-  (wsc-init-window)
-  (wsc-init-websocket)
-  (wsc-main-loop))
+(defun wsc:init ()
+  (wsc:read-config)
+  (wsc:init-window)
+  (wsc:init-websocket)
+  (wsc:main-loop))
 
-(defun wsc-finalize ()
-  (websocket-close wsc-websocket))
+(defun wsc:finalize ()
+  (websocket-close wsc:websocket))
 
 (defun websocket-chat-start ()
   (interactive)
-  (wsc-init))
+  (wsc:init))
 
 (provide 'websocket-chat)
 
