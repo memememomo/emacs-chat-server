@@ -26,6 +26,7 @@
   (require 'cl))
 
 (require 'websocket)
+(require 'iimage)
 
 (defgroup websocket-chat nil
   "Websocket Chat"
@@ -68,8 +69,8 @@
 		 (format "ws://%s:%s/chat/emacs" wsc:host wsc:port)
 		 :on-message (lambda (websocket frame)
 					   (with-current-buffer wsc:chat-buffer
-						 (recenter)
-						 (insert (format "%s\n" (decode-coding-string (websocket-frame-payload frame) 'utf-8)))))
+						 (insert (format "%s\n" (decode-coding-string (websocket-frame-payload frame) 'utf-8)))
+						 (iimage-recenter)))
 		 :on-error (lambda (ws type err)
 					 (message (format "%s:%s" type err)))
 		 :on-close (lambda (websocket) (setq wstest-closed t)))))
