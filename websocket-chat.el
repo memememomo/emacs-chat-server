@@ -48,6 +48,11 @@
   :type 'text
   :group 'websocket-chat)
 
+(defcustom wsc:stamp_dir (format "%sstamp" (file-name-directory load-file-name))
+  "Stamp Dir"
+  :type 'text
+  :group 'websocket-chat)
+
 (defvar wsc:websocket)
 (defvar wsc:chat-buffer)
 
@@ -85,10 +90,14 @@
   (websocket-send-text wsc:websocket
 					   (encode-coding-string msg 'raw-text)))
 
+(defun wsc:send-init-message-to-server ()
+  (wsc:send-to-server (format ":set_stamp_dir %s" wsc:stamp_dir)))
+
 (defun wsc:init ()
   (wsc:read-config)
   (wsc:init-window)
   (wsc:init-websocket)
+  (wsc:send-init-message-to-server)
   (wsc:main-loop))
 
 (defun wsc:finalize ()

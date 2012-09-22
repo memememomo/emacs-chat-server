@@ -4,6 +4,13 @@ use utf8;
 use Amon2::Lite;
 use Digest::MD5 ();
 
+
+my %tag_stamp = (
+    'stamp1' => 'stamp1.png',
+    'stamp2' => 'stamp2.png',
+);
+
+
 get '/' => sub {
     my ($c, $args) = @_;
     my %args = (
@@ -22,13 +29,21 @@ any '/chat/:client_type' => sub {
         sub {
             my $ws = shift;
             $clients->{$id} = {
-                socket   => $ws,
-                type     => $args->{'client_type'},
+                socket     => $ws,
+                type       => $args->{'client_type'},
+                stamp_dir => './',
             };
 
             $ws->on_receive_message(
                 sub {
                     my ($c, $original_message) = @_;
+
+                    if ( $original_message =~ /^\:(.+?)\s/ ) {
+                        my $cmd = $1;
+                        if ( exec_command($clients->{$id}, $cmd, $original_message) ) {
+                            return;
+                        }
+                    }
 
                     for my $id (keys %$clients) {
                         my $client = $clients->{$id};
@@ -36,7 +51,21 @@ any '/chat/:client_type' => sub {
                         my $message = $original_message;
 
                         if ( $client->{type} eq 'web' ) {
-                            $message =~ s#\[\[(.+?)\]\]#<img src="/static/stamp/$1"/>#g;
+                            while ( $message =~ /\{(.+?)\}/g ) {
+                                my $tag = $1;
+                                if ( my $stamp = $tag_stamp{$tag} ) {
+                                    $message =~ s#\{(.+?)\}#<img src="/static/stamp/$stamp"/>#g;
+                                }
+                            }
+                        }
+                        elsif ( $client->{type} eq 'emacs' ) {
+                            my $path = $client->{stamp_dir};
+                            while ( $message =~ /\{(.+?)\}/g ) {
+                                my $tag = $1;
+                                if ( my $stamp = $tag_stamp{$tag} ) {
+                                    $message =~ s#\{$tag\}#[[$path/$stamp]]#g;
+                                }
+                            }
                         }
 
                         $client->{socket}->send_message(
@@ -60,6 +89,18 @@ any '/chat/:client_type' => sub {
         }
     );
 };
+
+
+sub exec_command {
+    my ($client, $cmd, $message) = @_;
+
+    if ( $cmd eq 'set_stamp_dir' ) {
+        my ($cmd, $path) = split /\s+/, $message;
+        $client->{stamp_dir} = $path;
+        return 1;
+    }
+}
+
 
 # load plugins
 __PACKAGE__->load_plugin('Web::WebSocket');
